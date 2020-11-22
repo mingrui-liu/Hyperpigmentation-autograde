@@ -71,7 +71,7 @@ train_ds,test_ds = generator_fsl.create_generators()
 
 
 siamese_network.fit(train_ds,
-      epochs = 100,
+      epochs = 99,
       steps_per_epoch = 40,
       validation_data = test_ds)
 

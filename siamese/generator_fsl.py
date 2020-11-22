@@ -41,10 +41,10 @@ def create_generators():
 		all_image_labels = list(grade)
 		all_label = []
 		for grade in all_image_labels:
-			if grade < 2.0:
-				label = 1.5
-			elif grade > 4.0:
-				label = 4.5
+			if grade < 3.0:
+				label = 2.5
+			elif grade > 5.0:
+				label = 5.5
 			else:
 				label = grade
 			all_label.append(int(label * 2))
