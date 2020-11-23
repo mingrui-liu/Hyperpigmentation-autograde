@@ -13,7 +13,7 @@ from tensorflow.keras.layers import Dense, Dropout, Flatten, Activation,GlobalAv
 from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.optimizers import SGD,Adam,RMSprop,Nadam
 from siamese import SiameseNetwork
-
+import matplotlib.pyplot as plt
 
 import tensorflow_addons as tfa
 
@@ -70,9 +70,33 @@ train_ds,test_ds = generator_fsl.create_generators()
 
 
 
-siamese_network.fit(train_ds,
-      epochs = 99,
-      steps_per_epoch = 40,
-      validation_data = test_ds)
+history = siamese_network.fit(train_ds,
+      epochs = 100,
+      steps_per_epoch = 100,
+      validation_data = test_ds,
+      validation_steps = 20)
+      
+      
+def plot(history):
+  
+    plt.title('Training and validation accuracy')
+    plt.plot(history.history['accuracy'], label='accuracy')
+    plt.plot(history.history['val_accuracy'], label = 'val_accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.legend(loc='lower right')
+    plt.show()
+
+
+    plt.figure()
+    plt.title('Training and validation loss')
+    plt.plot(history.history['loss'][7:], label='loss')
+    plt.plot(history.history['val_loss'][7:], label = 'val_loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend(loc='lower right')
+    plt.show()
+    
+plot(history)
 
     
