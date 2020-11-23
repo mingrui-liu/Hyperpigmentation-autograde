@@ -53,9 +53,10 @@ def create_generators():
 		all_labels = [label_to_index[grade] for grade in all_label]
 		              
 		# train test split 
-		train_paths, test_paths, train_labels, test_labels = train_test_split(all_image_paths, all_labels,test_size = 0.1)
+		train_paths, test_paths, train_labels, test_labels = train_test_split(all_image_paths, all_labels, test_size=0.1, random_state=1)
+		train_paths, val_paths, train_labels, val_labels = train_test_split(train_paths, train_labels, test_size=0.1, random_state=1)
 
-		return train_paths, test_paths, train_labels, test_labels
+		return train_paths,val_paths, test_paths, train_labels, val_labels, test_labels
 
 
 	def load_file_from_disk_with_additional_image(data_pat):
@@ -123,9 +124,9 @@ def create_generators():
 
 		##train val test split
 		train_paths, test_paths, train_labels, test_labels = train_test_split(all_image_paths, all_labels, test_size=0.1, random_state=1)
+		train_paths, val_paths, train_labels, val_labels = train_test_split(train_paths, train_labels, test_size=0.1, random_state=1)
 
-		return train_paths, test_paths, train_labels, test_labels
-
+		return train_paths,val_paths, test_paths, train_labels, val_labels, test_labels
 
 
 
@@ -161,14 +162,17 @@ def create_generators():
 
 
 
-	train_paths, test_paths, train_labels, test_labels = load_file_from_disk_with_additional_image(data_path)
-	# here's our final training dataset
+
+	train_paths,val_paths, test_paths, train_labels, val_labels, test_labels = load_file_from_disk_with_additional_image(data_path)
+  # here's our final training dataset
 	train_ds = create_ds(train_paths,train_labels)
+	val_ds = create_ds(val_paths,val_labels)
 	test_ds = create_ds(test_paths,test_labels)
 
+
+  #train
 	train_ds = train_ds.cache()
-	
-	train_ds = train_ds.shuffle(buffer_size = 64)
+	train_ds = train_ds.shuffle(buffer_size = 1024)
 	train_ds = train_ds.repeat()
 	train_ds = train_ds.map(lambda image_label1,image_label2: (tf.image.random_flip_left_right(image_label1[0]),tf.image.random_flip_left_right(image_label2[0]),image_label1[1],image_label2[1]),num_parallel_calls=AUTOTUNE)
 	#train_ds = train_ds.map(lambda image1,image2,label1,label2:(randaugment.distort_image_with_randaugment(image1,num_layers = 1,magnitude = 2),
@@ -179,17 +183,30 @@ def create_generators():
 	train_ds = train_ds.map(lambda image1,image2,label1,label2 :((image1,image2),detect(label1,label2)),num_parallel_calls=AUTOTUNE)
 	train_ds = train_ds.batch(BATCH_SIZE).prefetch(buffer_size=AUTOTUNE)
 
+  #val
+	val_ds = val_ds.cache()
+	val_ds = val_ds.shuffle(buffer_size = 64)
+	val_ds = val_ds.repeat()
+	val_ds = val_ds.map(lambda image_label1,image_label2: (image_label1[0],image_label2[0],image_label1[1],image_label2[1]),num_parallel_calls=AUTOTUNE)
+	val_ds = val_ds.map(lambda image1,image2,label1,label2 :(normalize(tf.cast(image1,tf.float32)),normalize(tf.cast(image2,tf.float32)),label1,label2),num_parallel_calls=AUTOTUNE)
+	val_ds = val_ds.map(lambda image1,image2,label1,label2 :((image1,image2),detect(label1,label2)),num_parallel_calls=AUTOTUNE)
+	val_ds = val_ds.batch(BATCH_SIZE).prefetch(buffer_size=AUTOTUNE)
 
+  #test
 	test_ds = test_ds.cache()
 	test_ds = test_ds.shuffle(buffer_size = 64)
 	test_ds = test_ds.repeat()
 	test_ds = test_ds.map(lambda image_label1,image_label2: (image_label1[0],image_label2[0],image_label1[1],image_label2[1]),num_parallel_calls=AUTOTUNE)
-	# test_ds = test_ds.map(lambda image1,image2,label1,label2 :(normalize(tf.cast(image1,tf.float32)),normalize(tf.cast(image2,tf.float32)),label1,label2),num_parallel_calls=AUTOTUNE)
+	test_ds = test_ds.map(lambda image1,image2,label1,label2 :(normalize(tf.cast(image1,tf.float32)),normalize(tf.cast(image2,tf.float32)),label1,label2),num_parallel_calls=AUTOTUNE)
 	test_ds = test_ds.map(lambda image1,image2,label1,label2 :((image1,image2),detect(label1,label2)),num_parallel_calls=AUTOTUNE)
 	test_ds = test_ds.batch(BATCH_SIZE).prefetch(buffer_size=AUTOTUNE)
 
 
-	return train_ds,test_ds
 
 
+
+
+
+
+	return train_ds,val_ds, test_ds,test_labels
 
