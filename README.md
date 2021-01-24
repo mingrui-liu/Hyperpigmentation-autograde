@@ -28,6 +28,8 @@ Our goal is that other data science methods, such as a knowledge-based approach 
 may have the potential to result in the desired outcome. With a given dataset of 2403 valid image-grade pairs, we
 used three different models in our project to compare which model yields the desired outcome.
 
+![progress](https://user-images.githubusercontent.com/23581048/105645050-38a65780-5e67-11eb-871f-2008b4244f73.png)
+
 ## Exploratory Data Analysis and Data Preprocessing
 **Dataset**
 We have 3 different types of data, images (.jpg), grades (.xlsx), and grading criteria (.docx).
@@ -65,10 +67,18 @@ models. By doing so, we converted the image pixels to range from -1 to 1, as the
 region of interest is the mottled hyperpigmentation, which is the detailed information on faces. Among the set of
 Transfer Learning models, ResNet50 performs better on detecting image details instead of image shapes or edges.
 Thus, we used ResNet50 as our baseline model.
-
+![WechatIMG230](https://user-images.githubusercontent.com/23581048/105645094-7a370280-5e67-11eb-83b3-2f206457c409.png)
 
 We trained 50 epochs with batch size 32 and shuffle buffer size 1024. Figure 3.2 and Figure 3.3 show that we
-achieved 99.94% in training accuracy and around 52% validation accuracy. From the test data, we achieved 50.42%
+achieved 99.94% in training accuracy and around 52% validation accuracy. From the test data, we achieved 50.42% accuracy.
+
+![WechatIMG231](https://user-images.githubusercontent.com/23581048/105645095-7a370280-5e67-11eb-9eba-34e2cb64c654.png)
+
+According to the confusion matrix, shown in Figure 3.4, we found that most of the misclassifications are near the
+diagonal. That is, whenever misclassification occurs, our predicted label is not that far away from the true label. For
+example, images in group 3 (represents actual grade 4) are mostly misclassified as group 4 (represents actual grade
+4.5).
+ ![WechatIMG232](https://user-images.githubusercontent.com/23581048/105645096-7a370280-5e67-11eb-8ee3-9113fb3b79f1.png)
 
 ### Method 1: Image Subtraction and Binary Threshold
 Model Construction and Results
@@ -79,21 +89,26 @@ detailed region of interest instead of face contour, fine lines, and wrinkles.
 The idea is inspired by Automatic Acne Detection for Medical Treatment. Our proposed procedure is as follows:
 
 1. Image Subtraction
-1) Convert RGB image to Grayscale color space to simplify the calculation.
-2) Convert RGB image to HSV color space and extract brightness value (V) from HSV image
-3) Subtract grayscale value out of normalized brightness value to reveal a region of interest.
-4) Multiply the binary image with the brightness layer of the HSV to get the brightness intensity
-binary threshold image
+ a. Convert RGB image to Grayscale color space to simplify the calculation.
+ b. Convert RGB image to HSV color space and extract brightness value (V) from HSV image
+ c. Subtract grayscale value out of normalized brightness value to reveal a region of interest.
+ d. Multiply the binary image with the brightness layer of the HSV to get the brightness intensity
+ binary threshold image
+ 
+![WechatIMG233](https://user-images.githubusercontent.com/23581048/105645098-7a370280-5e67-11eb-8c3f-ad1ae0f95c5a.png)
 
 2. Binary Thresholding to obtain a binary image
 
-  1. Set the threshold value as 0.165 in this case for the best visual result. Any region above 0.165 is
+  a. Set the threshold value as 0.165 in this case for the best visual result. Any region above 0.165 is
   considered to be the region of interest, and any region below 0.165 is ignored.
   accuracy.
-  2. We took a deeper look at another two images with grade 3 and grade 6 respectively, using binary
+ 
+  b. We took a deeper look at another two images with grade 3 and grade 6 respectively, using binary
   threshold value 0.165. The image of grade 6 in the original RGB color space shows a larger and
   darker area of mottled hyperpigmentation. The images after subtraction and binary thresholding
   show a similar pattern. The binary image with grade 6 has more white pixels than the one with
+  
+![WechatIMG234](https://user-images.githubusercontent.com/23581048/105645099-7a370280-5e67-11eb-89d0-165f5beb64f7.png)
 
 The model structure and parameter settings are similar to our
 baseline model. The only difference is that we trained 100 epochs here. The results are as follows.
@@ -108,6 +123,8 @@ feature vectors. So even with a few images, we could get better predictions. For
 compares it with all other images from data sources, and learns their similarity. For example, if we have 100
 images, for every single image, the network generates 99 other comparisons, which incredibly increases the training
 size.
+![WechatIMG234](https://user-images.githubusercontent.com/23581048/105645099-7a370280-5e67-11eb-89d0-165f5beb64f7.png)
+
 
 #### Data preparation
 Due to the structure of the Siamese network, which needs two input images at one time, we needed to build
@@ -143,7 +160,8 @@ In principle, to train the network, we used binary cross-entropy loss. Therefore
   4. The values then passed through a sigmoid function and a similarity score was produced. Since our
   output is binary in nature, we used the tf.keras.losses.binary_crossentropy() function.
   with 2 output features (equal number, different number) to the network to obtain the logits.
-
+![WechatIMG235](https://user-images.githubusercontent.com/23581048/105645100-7acf9900-5e67-11eb-94d4-dce01579e023.png)
+![WechatIMG236](https://user-images.githubusercontent.com/23581048/105645101-7acf9900-5e67-11eb-91e3-2bb54dc76892.png)
 Since the output of the Siamese network is a similarity score of two images we fed in, another function is required
 to do the prediction of the classification of the input image X. Here is how we constructed the classification
 problem.
@@ -153,7 +171,7 @@ problem.
   2. Calculate the similarities between the sample image and images for each class
   3. Find the class which has the highest average similarity with the sample image
   4. The class with the highest similarity will be the class prediction assigned to the sample image.
-
+![WechatIMG237](https://user-images.githubusercontent.com/23581048/105645102-7acf9900-5e67-11eb-87a5-e235355c34f1.png)
 To train the model we used Adam as our optimizer and Sparse Categorical Cross-Entropy as our loss function.
 Different from the baseline model, we used 1e-8 as our learning rate instead of the cyclical learning rate, because
 we rarely faced the local optimal problem when we trained the Siamese network. We used both the Accuracy and
