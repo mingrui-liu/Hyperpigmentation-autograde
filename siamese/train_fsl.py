@@ -85,5 +85,30 @@ def train_model():
 
           
      
+def calc_similarity(test_paths,test_labels,df):
+  path_test = test_paths[0:1]*100
+  label_test = test_labels[0:1]*100
+
+  res = []
+  for i in set(df.label):
+    paths_train = df[df.label == i].path[0:100]
+    labels_train = df[df.label == i].label[0:100]
+
+    temp_ds = create_ds_prediction(path_test,label_test,paths_train,labels_train)
+    temp_ds = temp_ds.map(lambda image_label1,image_label2: 
+        (image_label1[0],image_label2[0],image_label1[1],image_label2[1]),num_parallel_calls=AUTOTUNE)
+    temp_ds = temp_ds.map(lambda image1,image2,label1,label2 :
+        (normalize(tf.cast(image1,tf.float32)),normalize(tf.cast(image2,tf.float32)),label1,label2),num_parallel_calls=AUTOTUNE)
+    temp_ds = temp_ds.map(lambda image1,image2,label1,label2 :((image1,image2),detect(label1,label2)),num_parallel_calls=AUTOTUNE)
+    temp_ds = temp_ds.batch(BATCH_SIZE).prefetch(buffer_size=AUTOTUNE)
+    prediction = new_model.predict(temp_ds)
+    avg_similarity = sum(prediction)/len(prediction)
+    res.append([i,avg_similarity])
+
+  All_res = pd.DataFrame(res, columns = ['class', 'similarity']) 
+  return All_res
+
+def prediction(similarity_table):
+  return similarity_table.max()[0]
 
         
