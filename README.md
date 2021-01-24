@@ -78,6 +78,7 @@ According to the confusion matrix, shown in Figure 3.4, we found that most of th
 diagonal. That is, whenever misclassification occurs, our predicted label is not that far away from the true label. For
 example, images in group 3 (represents actual grade 4) are mostly misclassified as group 4 (represents actual grade
 4.5).
+
  ![WechatIMG232](https://user-images.githubusercontent.com/23581048/105645096-7a370280-5e67-11eb-8ee3-9113fb3b79f1.png)
 
 ### Method 1: Image Subtraction and Binary Threshold
@@ -89,21 +90,21 @@ detailed region of interest instead of face contour, fine lines, and wrinkles.
 The idea is inspired by Automatic Acne Detection for Medical Treatment. Our proposed procedure is as follows:
 
 1. Image Subtraction
- a. Convert RGB image to Grayscale color space to simplify the calculation.
- b. Convert RGB image to HSV color space and extract brightness value (V) from HSV image
- c. Subtract grayscale value out of normalized brightness value to reveal a region of interest.
- d. Multiply the binary image with the brightness layer of the HSV to get the brightness intensity
+ - Convert RGB image to Grayscale color space to simplify the calculation.
+ - Convert RGB image to HSV color space and extract brightness value (V) from HSV image
+ - Subtract grayscale value out of normalized brightness value to reveal a region of interest.
+ - Multiply the binary image with the brightness layer of the HSV to get the brightness intensity
  binary threshold image
  
 ![WechatIMG233](https://user-images.githubusercontent.com/23581048/105645098-7a370280-5e67-11eb-8c3f-ad1ae0f95c5a.png)
 
 2. Binary Thresholding to obtain a binary image
 
-  a. Set the threshold value as 0.165 in this case for the best visual result. Any region above 0.165 is
+  - Set the threshold value as 0.165 in this case for the best visual result. Any region above 0.165 is
   considered to be the region of interest, and any region below 0.165 is ignored.
   accuracy.
  
-  b. We took a deeper look at another two images with grade 3 and grade 6 respectively, using binary
+  - We took a deeper look at another two images with grade 3 and grade 6 respectively, using binary
   threshold value 0.165. The image of grade 6 in the original RGB color space shows a larger and
   darker area of mottled hyperpigmentation. The images after subtraction and binary thresholding
   show a similar pattern. The binary image with grade 6 has more white pixels than the one with
@@ -123,8 +124,8 @@ feature vectors. So even with a few images, we could get better predictions. For
 compares it with all other images from data sources, and learns their similarity. For example, if we have 100
 images, for every single image, the network generates 99 other comparisons, which incredibly increases the training
 size.
-![WechatIMG234](https://user-images.githubusercontent.com/23581048/105645099-7a370280-5e67-11eb-89d0-165f5beb64f7.png)
 
+![WechatIMG235](https://user-images.githubusercontent.com/23581048/105645100-7acf9900-5e67-11eb-94d4-dce01579e023.png)
 
 #### Data preparation
 Due to the structure of the Siamese network, which needs two input images at one time, we needed to build
@@ -160,18 +161,26 @@ In principle, to train the network, we used binary cross-entropy loss. Therefore
   4. The values then passed through a sigmoid function and a similarity score was produced. Since our
   output is binary in nature, we used the tf.keras.losses.binary_crossentropy() function.
   with 2 output features (equal number, different number) to the network to obtain the logits.
-![WechatIMG235](https://user-images.githubusercontent.com/23581048/105645100-7acf9900-5e67-11eb-94d4-dce01579e023.png)
-![WechatIMG236](https://user-images.githubusercontent.com/23581048/105645101-7acf9900-5e67-11eb-91e3-2bb54dc76892.png)
+  
+  ![WechatIMG236](https://user-images.githubusercontent.com/23581048/105645101-7acf9900-5e67-11eb-91e3-2bb54dc76892.png)
+  
+
 Since the output of the Siamese network is a similarity score of two images we fed in, another function is required
 to do the prediction of the classification of the input image X. Here is how we constructed the classification
 problem.
+
+![WechatIMG237](https://user-images.githubusercontent.com/23581048/105645102-7acf9900-5e67-11eb-87a5-e235355c34f1.png)
 
 #### To perform actual predictions on images
   1. Group images from the data set based on their class
   2. Calculate the similarities between the sample image and images for each class
   3. Find the class which has the highest average similarity with the sample image
   4. The class with the highest similarity will be the class prediction assigned to the sample image.
-![WechatIMG237](https://user-images.githubusercontent.com/23581048/105645102-7acf9900-5e67-11eb-87a5-e235355c34f1.png)
+  
+  ![WechatIMG238](https://user-images.githubusercontent.com/23581048/105645103-7acf9900-5e67-11eb-98b1-225c942ae374.png)
+  
+  ![WechatIMG239](https://user-images.githubusercontent.com/23581048/105645104-7acf9900-5e67-11eb-82d2-767665bb3049.png)
+
 To train the model we used Adam as our optimizer and Sparse Categorical Cross-Entropy as our loss function.
 Different from the baseline model, we used 1e-8 as our learning rate instead of the cyclical learning rate, because
 we rarely faced the local optimal problem when we trained the Siamese network. We used both the Accuracy and
@@ -179,6 +188,8 @@ RMSE as the evaluation metrics.
 After running 100 epochs on the Siamese network with batch size 64, we achieved 86.4% training accuracy and
 84.1% validation accuracy. Compared to the base model and the binary threshold method, the accuracy gains a
 great improvement.
+
+![WechatIMG240](https://user-images.githubusercontent.com/23581048/105645105-7b682f80-5e67-11eb-9cd9-8176f03d9857.png)
 
 ## Conclusion
 In conclusion, we developed an automatic grader for grading mottled hyperpigmentation from facial images taken
